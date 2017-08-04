@@ -9,7 +9,7 @@
 
 \section*{Abstract}
 
-Smart contracts \cite{szabo1997formalizing} are an often touted feature of cryptographic currency systems such as Bitcoin, but they have yet to see widespread financial use.  Two of the biggest hurdles to their implementation and adoption have been scalability of the smart contracts, and the difficulty in getting data external to the curency system into the smart contract.  Privacy of the contract has been another issue to date.  Discreet Log Contracts are a system which addresses the scalability and privacy concerns and seeks to minimize the trust required in the oracle which provides external data.  The contracts are discreet in that external observers cannot detect the presence of the contract in the transaction log.  They also hinge on knowledge of a \textit{discrete} logarithm, which is a plus.
+Smart contracts \cite{szabo1997formalizing} are an often touted feature of cryptographic currency systems such as Bitcoin, but they have yet to see widespread financial use.  Two of the biggest hurdles to their implementation and adoption have been scalability of the smart contracts, and the difficulty in getting data external to the currency system into the smart contract.  Privacy of the contract has been another issue to date.  Discreet Log Contracts are a system which addresses the scalability and privacy concerns and seeks to minimize the trust required in the oracle which provides external data.  The contracts are discreet in that external observers cannot detect the presence of the contract in the transaction log.  They also hinge on knowledge of a \textit{discrete} logarithm, which is a plus.
 
 
 \section*{Model}
@@ -18,7 +18,7 @@ There are 3 parties involved in the contract process: Alice, Bob, and Olivia.  A
 
 The DLC protocol can be used for a wide variety of contracts, covering most cases where payouts between parties depend on a publicly known number in the future.  In this example, Alice and Bob make and execute a currency future contract.  They start on Wednesday, when the Japanese Yen is worth 1000 satoshis.  The contract closes on Friday, at which time the Yen is worth 1050 satoshis.
 
-\subsection*{Comitted R-point Signatures}
+\subsection*{Committed R-point Signatures}
 
 Discreet Log Contracts use the well-known Schnorr signature\cite{schnorr1990efficient}, but in an unusual way.  Normally users create a private scalar \(a\), compute \(A = aG\) by repeated addition of the group generator \(G\), and publish \(A\) as their public key.  When signing a message, they create another random private scalar \(k\), compute \(R = kG\), and then compute  \[s = k - h(m, R)a\]
 
@@ -118,7 +118,7 @@ Olivia may also disappear after publishing the \(R\) values, but before signing 
 
 Multiple oracles can be used by counterparties in a contract.  If two oracle signatures are desired, counterparties simply add the oracle sG points together before adding them to their pubkeys.  This can substantially reduce the risk of an fraudulent oracle, at the cost of some risk for data which may not have exact consensus; if Oracle1 reports 1050 and Oracle2 reports 1049, no execution transaction may be safely used and the pre-arraged timeout transaction will eventually become valid, resulting in a refund for both parties.
 
-Another risk is that a party who has lost all or substantially all of their position in a contract may broadcast an invalid Contract Execution Transaction in order to delay the rightful owner of the funds.  Ultimately the funds can be recovered by the correct party, but they will have to wait a timeout period before gaining access to the funds.  This is an annoyance which can be mitigated by over-colaterallizing the contract, and will hopefully be rare in practice.
+Another risk is that a party who has lost all or substantially all of their position in a contract may broadcast an invalid Contract Execution Transaction in order to delay the rightful owner of the funds.  Ultimately the funds can be recovered by the correct party, but they will have to wait a timeout period before gaining access to the funds.  This is an annoyance which can be mitigated by over-collateralizing the contract, and will hopefully be rare in practice.
 
 \section*{Optimizations}
 
