@@ -108,10 +108,10 @@ If either party prematurely broadcasts an execution transaction, or broadcasts t
 
 \section*{Risk of the Trusted Oracle}
 
-The oracle, Olivia, can mis-report the price.  If the oracle does mis-report, all users of the system will be able to identify the error and stop using the oracle.  If Olivia attempts to publicly report two different prices (in order to assume the role of a counterparty in a contract and ``win" the bet regardless of the true outcome), she will reveal her permanent private key, as well as the\(k\) value for the particular contract they attempted to double-report.
+The oracle, Olivia, can mis-report the price.  If the oracle does mis-report, all users of the system will be able to identify the error and stop using the oracle.  If Olivia attempts to publicly report two different prices (in order to assume the role of a counterparty in a contract and ``win" the bet regardless of the true outcome), she will reveal her permanent private key, as well as the \(k\) value for the particular contract she attempted to double-report.
 If Olivia herself is a counterparty to a contract (e.g. Alice is Olivia), she can cause it to execute in an arbitrary fashion withouth revealing her private key.  This is possible by broadcasting her desired outcome \(TX_{2}\), then computing 
 \[Priv_{A_2} =  Priv_{A} + s_{2}\]
-and signing the output to \(Pub_{A_2}\).  Olivia sign without publicly revealing \(s_2\), keeping her private key \(v\).  This is detectable, and the defrauded party Bob can provide a compact proof of the fraud so that all other users can stop using Olivia's commitments and signatures.  Olivia has one chance to defraud contracts she participates in, and then she would immediately lose the trust of all users.
+and signing the output to \(Pub_{A_2}\).  Olivia signs without publicly revealing \(s_2\), keeping her private key \(v\).  This is detectable, and the defrauded party Bob can provide a compact proof of the fraud so that all other users can stop using Olivia's commitments and signatures.  Olivia has one chance to defraud contracts she participates in, and then she would immediately lose the trust of all users.
 
 Olivia may also disappear after publishing the \(R\) values, but before signing to report on prices or events.  To deal with this possiblitiy, contracts can have a refund transaction which can be broadcast by either party a few days after the \(s\) values are anticipated to arrive.  The refund transaction returns would by default return parties their initial deposits.
 
