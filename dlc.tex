@@ -9,28 +9,28 @@
 
 \section*{Abstract}
 
-Smart contracts \cite{szabo1997formalizing} are an often touted feature of cryptographic currency systems such as Bitcoin, but they have yet to see widespread financial use.  Two of the biggest hurdles to their implementation and adoption have been scalability of the smart contracts, and the difficulty in getting data external to the curency system into the smart contract.  Privacy of the contract has been another issue to date.  Discreet Log Contracts are a system which addresses the scalability and privacy concerns and seeks to minimize the trust required in the oracle which provides external data.  The contracts are discreet in that external observers cannot detect the presence of the contract in the transaction log.  They also hinge on knowledge of a \textit{discrete} logarithm, which is a plus.
+Smart contracts \cite{szabo1997formalizing} are an often touted feature of cryptographic currency systems such as Bitcoin, but they have yet to see widespread financial use.  Two of the biggest hurdles to their implementation and adoption have been scalability of the smart contracts, and the difficulty in getting data external to the currency system into the smart contract.  Privacy of the contract has been another issue to date.  Discreet Log Contracts are a system which addresses the scalability and privacy concerns and seeks to minimize the trust required in the oracle which provides external data.  The contracts are discreet in that external observers cannot detect the presence of the contract in the transaction log.  They also hinge on knowledge of a \textit{discrete} logarithm.
 
 
 \section*{Model}
 
-There are 3 parties involved in the contract process: Alice, Bob, and Olivia.  Alice and Bob are contract counterparties, while Olivia is the oracle.  Alice and Bob do not trust each other and do not need to know any legal identifying information about each other, but they must be able to communicate over an authenticated channel, and they must be able to persistently recognize each other.  Alice and Bob also must be able to receive signed broadcast messages from Olivia.  Olivia does not need to be aware of Alice and Bob, and ideally she has no contact other than broacasting information.  The information is compact enough that broadcast could take place over the Bitcoin network itself, though this should not be necessary.
+There are 3 parties involved in the contract process: Alice, Bob, and Olivia.  Alice and Bob are contract counterparties, while Olivia is the oracle.  Alice and Bob do not trust each other and do not need to know any legal identifying information about each other, but they must be able to communicate over an authenticated channel, and they must be able to persistently recognize each other.  Alice and Bob also must be able to receive signed broadcast messages from Olivia.  Olivia does not need to be aware of Alice and Bob, and ideally she has no contact other than broadcasting information.  The information is compact enough that broadcast could take place over the Bitcoin network itself, though this should not be necessary.
 
 The DLC protocol can be used for a wide variety of contracts, covering most cases where payouts between parties depend on a publicly known number in the future.  In this example, Alice and Bob make and execute a currency future contract.  They start on Wednesday, when the Japanese Yen is worth 1000 satoshis.  The contract closes on Friday, at which time the Yen is worth 1050 satoshis.
 
-\subsection*{Comitted R-point Signatures}
+\subsection*{Committed R-point Signatures}
 
 Discreet Log Contracts use the well-known Schnorr signature\cite{schnorr1990efficient}, but in an unusual way.  Normally users create a private scalar \(a\), compute \(A = aG\) by repeated addition of the group generator \(G\), and publish \(A\) as their public key.  When signing a message, they create another random private scalar \(k\), compute \(R = kG\), and then compute  \[s = k - h(m, R)a\]
 
 where \(h()\) is a hash function, and \(m\) is the message to be signed.  The signature is \((R, s)\).
 
 A verifier, given \((A, m, R, s)\) can compute
-\[sG = R - h(m, R)A\]
-\[= kG - h(m, R)aG\]
+\[sG \stackrel{?}{=} R - h(m, R)A\]
+\[\stackrel{?}{=} kG - h(m, R)aG\]
 
 In Discreet Log Contracts, we instead call the pair \((A, R)\) the public key, leaving only \(s\) as the signature.  The equation is the same, but \(R\) has been re-classified as part of the public key instead of as part of the signature.  Use of a similar construction in an attempt to prevent double-spends was recently published in \cite{cryptoeprint:2017:394}.
 
-Olivia publishes point \(V\), which is her public key \(vG\).  Olivia will use this public key multiple times and should keep \(v\) safe.  \(v\) can be made up of different keys held by different parties.  Olivia also publishes another point, \(R = kG\).  \(k\) is a random nonce, and \(R\) is a one-time-use signing key.  This is the same \(k\) and \(R\)  used in normal Schnorr signatures, but the \(R\) value is committed in advance of the signature being calculated; the message to be signed is not yet known, but a nonce has been chosen and an R point published.  (This prevents the use of some deterministic nonce schemes such as RFC6979).
+Olivia publishes point \(V\), which is her public key \(vG\).  Olivia will use this public key multiple times and should keep \(v\) safe.  \(v\) can be made up of different keys held by different parties.  Olivia also publishes another point, \(R = kG\).  \(k\) is a random nonce, and \(R\) is a one-time-use signing key.  This is the same \(k\) and \(R\)  used in normal Schnorr signatures, but the \(R\) value is committed in advance of the signature being calculated; the message to be signed is not yet known, but a nonce has been chosen and an R point published.  (This prevents the use of some deterministic nonce schemes such as RFC6979\cite{rfc}).
 
 Olivia also publishes the description metadata associated with \(R\).  Every \(R\) has an asset type and closing time associated with it.  In this example, \(R\) is associated with the price of the Japanese Yen at Friday market close.  As \(R\) is 33 bytes in length, the metadata will likely be larger than \(R\) itself.
 
@@ -63,7 +63,7 @@ while Bob holds
 \[Pub_{B_i} \lor (Pub_{A} \land TimeDelay)\]
 
 
-The latter allows a user with key \(Priv_{B_i}\) to spend the ouput immediately, and allowing a user with key \(Priv_{A}\) to spend the output after some time has elapsed.  In the Lightning Network, this is used to enforce revocation of a previously valid  channel state,  while  here it enforces  that users only broadcast the transaction which the oracle has indirectly endorsed as the correct state.
+The latter allows a user with key \(Priv_{B_i}\) to spend the output immediately, and allowing a user with key \(Priv_{A}\) to spend the output after some time has elapsed.  In the Lightning Network, this is used to enforce revocation of a previously valid  channel state,  while  here it enforces  that users only broadcast the transaction which the oracle has indirectly endorsed as the correct state.
 
 Alice holds transactions \(TX_{1} ... TX_{n}\) which send to
 
@@ -106,23 +106,23 @@ Both Alice and Bob now have the option of unilaterally closing the contract at t
 
 If either party prematurely broadcasts an execution transaction, or broadcasts the wrong transaction (for example, broadcasting \(TX_{950}\)), they will not be able to spend the script hash output.  Their counterparty, after the delay time has elapsed, will be able to claim the script hash output.  Since they have sole access to the the pubkey hash output this allows them to claim the entire value of the contract.  In this way, violating the rules of the contract forfeits all value in the contract to the opposite party.
 
-\section*{Risk of the Trusted Oracle}
+\section*{Risks of a Trusted Oracle}
 
 The oracle, Olivia, can mis-report the price.  If the oracle does mis-report, all users of the system will be able to identify the error and stop using the oracle.  If Olivia attempts to publicly report two different prices (in order to assume the role of a counterparty in a contract and ``win" the bet regardless of the true outcome), she will reveal her permanent private key, as well as the \(k\) value for the particular contract she attempted to double-report.
-If Olivia herself is a counterparty to a contract (e.g. Alice is Olivia), she can cause it to execute in an arbitrary fashion withouth revealing her private key.  This is possible by broadcasting her desired outcome \(TX_{2}\), then computing 
+If Olivia herself is a counterparty to a contract (e.g. Alice is Olivia), she can cause it to execute in an arbitrary fashion without revealing her private key.  This is possible by broadcasting her desired outcome \(TX_{2}\), then computing 
 \[Priv_{A_2} =  Priv_{A} + s_{2}\]
 and signing the output to \(Pub_{A_2}\).  Olivia signs without publicly revealing \(s_2\), keeping her private key \(v\).  This is detectable, and the defrauded party Bob can provide a compact proof of the fraud so that all other users can stop using Olivia's commitments and signatures.  Olivia has one chance to defraud contracts she participates in, and then she would immediately lose the trust of all users.
 
-Olivia may also disappear after publishing the \(R\) values, but before signing to report on prices or events.  To deal with this possiblitiy, contracts can have a refund transaction which can be broadcast by either party a few days after the \(s\) values are anticipated to arrive.  The refund transaction returns would by default return parties their initial deposits.
+Olivia may also disappear after publishing the \(R\) values, but before signing to report on prices or events.  To deal with this possibility, contracts can have a refund transaction which can be broadcast by either party a few days after the \(s\) values are anticipated to arrive.  The refund transaction returns would by default return parties their initial deposits.
 
 
 Multiple oracles can be used by counterparties in a contract.  If two oracle signatures are desired, counterparties simply add the oracle sG points together before adding them to their pubkeys.  This can substantially reduce the risk of an fraudulent oracle, at the cost of some risk for data which may not have exact consensus; if Oracle1 reports 1050 and Oracle2 reports 1049, no execution transaction may be safely used and the pre-arraged timeout transaction will eventually become valid, resulting in a refund for both parties.
 
-Another risk is that a party who has lost all or substantially all of their position in a contract may broadcast an invalid Contract Execution Transaction in order to delay the rightful owner of the funds.  Ultimately the funds can be recovered by the correct party, but they will have to wait a timeout period before gaining access to the funds.  This is an annoyance which can be mitigated by over-colaterallizing the contract, and will hopefully be rare in practice.
+Another risk is that a party who has lost all or substantially all of their position in a contract may broadcast an invalid Contract Execution Transaction in order to delay the rightful owner of the funds.  Ultimately the funds can be recovered by the correct party, but they will have to wait a timeout period before gaining access to the funds.  This is an annoyance which can be mitigated by over-collateralizing the contract, and will hopefully be rare in practice.
 
 \section*{Optimizations}
 
-Several optimizations can reduce computation and data requirements.  There are undoubtely many optimizations to be found when implementing the system, but several basic ideas are listed here.
+Several optimizations can reduce computation and data requirements.  There are undoubtedly many optimizations to be found when implementing the system, but several basic ideas are listed here.
 
 \subsection*{Base and Exponent \(R\) values}
 
@@ -134,7 +134,7 @@ Since prices can range over many orders of magnitude, Alice and Bob can optimize
 Alice and Bob can construct transactions the same way by calculating the sum of the \(s_{mantissa}G\) and \(s_{exponent}G\) points.  When Olivia signs the pair of mantissa and base messages, she reveals the \(s\) values which can then be added together to get the scalar needed.
 The optimization lies in the fact that Alice and Bob don't need precision if the exponent is 4; they can ignore  \(R_{mantissa}\) when \(R_{exponent}\) is 4, 5, 6, etc, and only sign a handful of transactions dealing with many possible unlikely outcomes.
 
-This could be extended to 3 or 4 R-points to allow further granularity.  Also, 10 is not an optimal base for exponentiation; 2 is probably a better choice.
+This could be extended to 3 or 4 R-points to allow further granularity.  Also, 10 is not an optimal base for exponentiation; 2 is probably a better choice.  In the extreme case, one can expose each bit of \(m\) and have each bit signed individually, giving contract participants flexibility in their precision, at the cost of a larger message size.
 
 \subsection*{Contracts within channels}
 
@@ -148,7 +148,7 @@ Futures contracts are useful, but typically traders want to enter and exit posit
 
 \subsection*{Decentralized Matching}
 
-Before Alice and Bob can create a contract, they need to find each other.  Initially this can be done with centralized matching engines, which would hold no custody of user funds.  Fair decentralized peer discovery and matching is another topic for future research.
+Before Alice and Bob can create a contract, they need to find each other.  Initially this can be done with centralized matching engines, which would hold no custody of user funds.  Fair decentralized peer discovery and matching is a topic of active research and would fit well with execution via Discreet Log Contracts.
 
 \section*{Conclusion}
 
