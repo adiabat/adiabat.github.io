@@ -38,7 +38,6 @@ Because \(R\) is known, \(sG\) can be computed for any given \(m\) before \(s\) 
 
 \section*{Contract creation}
 
-
 Contracts exist as a single output on the blockchain with all the funds to be paid out upon contract execution held for the duration of the contract.  (This output can be optimized away in many cases; see Optimizations below)  Before contract setup can begin, Alice and Bob must first find each other and agree on the terms of the contract.  Alice is ``buying" Yen for delivery Friday, while Bob is ``selling" Yen.
 
 In order to establish a contract, both parties must have funds in a shared multisignature address.  The establishment of this fund output does not differ substantially from the process of channel funding in the Lightning Network.  Alice and Bob initially agree on the funding txid and index, so that they may create child transactions spending from this output before it is broadcast to the network and confirmed in a block.
@@ -82,6 +81,11 @@ Bob holds the inverse: transactions which send to \(Pub_A\), Alice's public key,
 without the time delay.
 
 While verifiers can compute the point \(s_iG\), they do not know what \(s_i\) will be for any given \(i\).  When Olivia signs, she reveals the discrete log of a point that Alice and Bob have already computed.
+
+To prevent key-substitution attacks, both Alice and Bob must sign messages proving that they know the private key associated with their public key.  As they are interactively constructing the contract, they can sign the messages they exchange from \(Pub_A\) and \(Pub_B\).  A safer way to avoid key-subsitution attacks without the need for interactivity is the key-delinearization technique described in  \cite{cryptoeprint:2018:068}.  Using this delinearization, Bob's public key would no longer be \[Pub_{Bi} = Pub_{Bob} + s_iG\], but have coefficients which would still allow him to sign given knowledge of the private key \(Priv_B\) and \(s_i\).
+
+
+Note that while Olivia was using a variant of Schnorr signatures, which as of 2019 is not supported in Bitcoin, Alice and Bob can use ECDSA signatures for their public keys for the Contract Execution Transactions.  As Olivia exists entirely off-chain, the entire contract mechanism is compatible with Bitcoin as it exists now, using the same transaction scripts as currently wide-spread Lightning Network channel transactions.
 
 \section*{Oracle Signing}
 
