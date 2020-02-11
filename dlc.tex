@@ -1,4 +1,13 @@
-\documentclass[11pt]{article}
+\documentclass[10pt]{article}
+
+%\documentclass[jets]{usenixjournal}
+%\usepackage[ruled]{algorithm2e}
+%\renewcommand{\algorithmcfname}{ALGORITHM}
+%\SetAlFnt{\small}
+%\SetAlCapFnt{\small}
+%\SetAlCapNameFnt{\small}
+%\SetAlCapHSkip{0pt}
+%\IncMargin{-\parindent}
 
 \title{\textbf{Discreet Log Contracts}}
 \author{Thaddeus Dryja}
@@ -30,7 +39,9 @@ A verifier, given \((A, m, R, s)\) can compute
 
 In Discreet Log Contracts, we instead call the pair \((A, R)\) the public key, leaving only \(s\) as the signature.  The equation is the same, but \(R\) has been re-classified as part of the public key instead of as part of the signature.  Use of a similar construction in an attempt to prevent double-spends was recently published in \cite{cryptoeprint:2017:394}.
 
-Olivia publishes point \(V\), which is her public key \(vG\).  Olivia will use this public key multiple times and should keep \(v\) safe.  \(v\) can be made up of different keys held by different parties.  Olivia also publishes another point, \(R = kG\).  \(k\) is a random nonce, and \(R\) is a one-time-use signing key.  This is the same \(k\) and \(R\)  used in normal Schnorr signatures, but the \(R\) value is committed in advance of the signature being calculated; the message to be signed is not yet known, but a nonce has been chosen and an R point published.  (This prevents the use of some deterministic nonce schemes such as RFC6979\cite{rfc}).
+Other similar recent work along these lines includes  Adaptor Signatures \cite{adaptor}, and a use of them in Scriptless Scripts for cross chain atomic swaps \cite{cryptoeprint:2018:472}.  While these techniques alter the signature equation by introducing new components, Discrete Log Contracts use the same signing and verification equations, unmodified, and only alter how the components are used; specifically, the \(s\) scalar component of the signature is now treated as a private key.
+
+The signing oracle, Olivia publishes point \(V\), which is her public key, and equal to \(vG\).  Olivia will use this public key multiple times and should keep \(v\) safe.  \(v\) can be made up of different keys held by different parties.  Olivia also publishes another point, \(R = kG\).  \(k\) is a random nonce, and \(R\) is a one-time-use signing key.  This is the same \(k\) and \(R\)  used in normal Schnorr signatures, but the \(R\) value is committed in advance of the signature being calculated; the message to be signed is not yet known, but a nonce has been chosen and an R point published.  (This prevents the use of some deterministic nonce schemes such as RFC6979\cite{rfc}).
 
 Olivia also publishes the description metadata associated with \(R\).  Every \(R\) has an asset type and closing time associated with it.  In this example, \(R\) is associated with the price of the Japanese Yen at Friday market close.  As \(R\) is 33 bytes in length, the metadata will likely be larger than \(R\) itself.
 
@@ -82,14 +93,14 @@ without the time delay.
 
 While verifiers can compute the point \(s_iG\), they do not know what \(s_i\) will be for any given \(i\).  When Olivia signs, she reveals the discrete log of a point that Alice and Bob have already computed.
 
-To prevent key-substitution attacks, both Alice and Bob must sign messages proving that they know the private key associated with their public key.  As they are interactively constructing the contract, they can sign the messages they exchange from \(Pub_A\) and \(Pub_B\).  A safer way to avoid key-subsitution attacks without the need for interactivity is the key-delinearization technique described in  \cite{cryptoeprint:2018:068}.  Using this delinearization, Bob's public key would no longer be \[Pub_{Bi} = Pub_{Bob} + s_iG\], but have coefficients which would still allow him to sign given knowledge of the private key \(Priv_B\) and \(s_i\).
+To prevent key-substitution attacks, both Alice and Bob must sign messages proving that they know the private key associated with their public key.  As they are interactively constructing the contract, they can sign the messages they exchange from \(Pub_A\) and \(Pub_B\).  A safer way to avoid key-substitution attacks without the need for interactivity is the key-delinearization technique described in  \cite{cryptoeprint:2018:068}.  Using this delinearization, Bob's public key would no longer be \[Pub_{Bi} = Pub_{Bob} + s_iG\], but have coefficients which would still allow him to sign given knowledge of the private key \(Priv_B\) and \(s_i\).
 
 
 Note that while Olivia was using a variant of Schnorr signatures, which as of 2019 is not supported in Bitcoin, Alice and Bob can use ECDSA signatures for their public keys for the Contract Execution Transactions.  As Olivia exists entirely off-chain, the entire contract mechanism is compatible with Bitcoin as it exists now, using the same transaction scripts as currently wide-spread Lightning Network channel transactions.
 
 \section*{Oracle Signing}
 
-Olivia's job is straightforward: wait until Friday market close, observe the closing price of the Yen, and sign that number with the pre-commited nonce.
+Olivia's job is straightforward: wait until Friday market close, observe the closing price of the Yen, and sign that number with the pre-committed nonce.
 
 The oracle sets \(m\) to be the observed price, in this example, 1050 yen per satoshi.  The oracle computes
 
@@ -138,11 +149,19 @@ Since prices can range over many orders of magnitude, Alice and Bob can optimize
 Alice and Bob can construct transactions the same way by calculating the sum of the \(s_{mantissa}G\) and \(s_{exponent}G\) points.  When Olivia signs the pair of mantissa and base messages, she reveals the \(s\) values which can then be added together to get the scalar needed.
 The optimization lies in the fact that Alice and Bob don't need precision if the exponent is 4; they can ignore  \(R_{mantissa}\) when \(R_{exponent}\) is 4, 5, 6, etc, and only sign a handful of transactions dealing with many possible unlikely outcomes.
 
-This could be extended to 3 or 4 R-points to allow further granularity.  Also, 10 is not an optimal base for exponentiation; 2 is probably a better choice.  In the extreme case, one can expose each bit of \(m\) and have each bit signed individually, giving contract participants flexibility in their precision, at the cost of a larger message size.
+This could be extended to 3 or 4 R-points to allow further granularity.  Also, 10 is not an optimal base for exponentiation; 2 is probably a better choice.  In the extreme case, one can expose each bit of \(m\) and have each bit signed individually, giving contract participants flexibility in their precision, at the cost of a larger message size from the oracle as there will be more \(s\) values as well as more public keys to initially share.
 
 \subsection*{Contracts within channels}
 
 If contracts each have an individual outpoint and p2wsh address, then every contract will take up space on the blockchain.  Instead, contracts can be created within an already existing Lightning Network channel.  In addition to the direct and HTLC outputs that exist in the commitment transaction spending a channel funding outpoint, there may be multiple, 2 of 2 multisig outputs which are their own channels or in this case, contracts.  This way if both parties are online and acknowledge the results of a contract, they may remove the contract output from the channel and update both balances to reflect the changes the contract made.  If either party is un-cooperative the other party can close the parent channel, and immediately close the contract as well using the oracle-supplied \(s\) values.
+
+\subsection*{Modifications to Bitcoin}
+
+Discreet Log Contracts, as described here, can be used today without any changes to the Bitcoin network.  Uncooperative contract executions will appear identical to uncooperative Lightning Network channel closures (though non-fraudulent contract executions will look like justice transactions, which are comparatively rare in the Lightning Network).  Two potential soft-fork rule changes to Bitcoin may affect Discrete Log Contracts.
+
+The adoption of Schnorr signatures or Taproot \cite{tap} in Bitcoin scripts would have minimal effect on the functionality of Discreet Log Contracts.  As the Contract Execution Transactions are already usable with ECDSA, the only benefit is that the initial commitment transaction can be to a single joint key rather than a 2 of 2 multisig address.  If Alice and Bob cooperatively close the contract without using Contract Execution Transactions, the entire contract will be indistinguishable from a single signature payment.  (Without the proposed Schnorr / Taproot BIP, in this case a 2 of 2 signature would be visible, but no further details of the contract).
+
+A more impactful change would be the adoption of ``sighash noinput" \cite{noin} or a similar method to have signatures not commit to the specific outputs they are spending.  This would allow for more scalable contracts within channels.  With currently available sighash methods, changing any part of the funding mechanism for a contract would require re-signing all execution transactions.  With sighash noinput, multiple contracts could be created and destroyed with no redundant signing.
 
 \section*{Further work}
 
@@ -158,6 +177,13 @@ Before Alice and Bob can create a contract, they need to find each other.  Initi
 
 Discreet Log Contracts have the potential to enhance the use cases of Bitcoin and other cryptographic currency networks by allowing users to discreetly enter in to futures contracts for a wide variety of assets, trusting oracles only to sign the correct price.  As the transactions look the same as Lightning Network transactions, it will remain difficult to estimate the total usage of DLCs across the network, and they should allow extensive complex smart contracts to occur without unduly taxing the global network.
 
+% Acknowledgments
+\section*{Acknowledgments}
+The author would like to thank the anonymous reviewers for helpful comments, colleagues at MIT Neha Narula, Madars Virza, and Sunoo Park for their input and discussion, and Joey Zhou for early discussion of these ideas.
+%\end{Acknowledgments}
+
+
+%\bibliographystyle{usenixjournal}
 
 \bibliographystyle{unsrt}
 \bibliography{dlc}
